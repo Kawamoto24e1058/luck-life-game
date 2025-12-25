@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Luck Life Game - 転生オート人生</title>
+    <meta name="description" content="転生ガチャから始まるオート人生シミュレーション。GitHub Pagesで動くブラウザゲーム。" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Luck Life Game</h1>
+      <div class="header-actions">
+        <button id="open-dex" class="ghost">図鑑</button>
+        <a id="repo-link" class="ghost" href="https://github.com/Kawamoto24e1058/luck-life-game" target="_blank" rel="noreferrer">GitHub</a>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="gacha-section" class="card hero title-screen">
+        <div class="title-logo">
+          <div class="logo-icon">🎰</div>
+          <h2 class="logo-text">Luck Life Game</h2>
+          <p class="logo-subtitle">運命の転生ガチャ</p>
+        </div>
+        <div class="title-features">
+          <div class="feature">⚡ オート進行</div>
+          <div class="feature">🎯 150種超イベント</div>
+          <div class="feature">🏆 実績コレクション</div>
+        </div>
+        <p class="muted title-desc">あなたの新しい人生が、今、始まる——</p>
+        <div class="start-inputs">
+          <input type="text" id="player-name" class="name-input" placeholder="名前を入力（任意）" maxlength="20" />
+          <input type="number" id="birth-year" class="year-input" placeholder="誕生年（任意、例:2000）" min="1900" max="2100" />
+        </div>
+        <div class="gacha-result hidden" id="gacha-result">
+          <div class="rarity" id="rarity-badge"></div>
+          <div id="gacha-flavor" class="flavor"></div>
+          <div class="stats" id="init-stats"></div>
+        </div>
+        <div class="actions center" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+          <button id="start-auto" class="start-btn glow-btn">🎲 シングルモード 🎲</button>
+          <button id="start-duel" class="start-btn">🆚 対戦モード</button>
+        </div>
+      </section>
+
+      <!-- 対戦モード名前入力 -->
+      <section id="duel-name-section" class="card hidden">
+        <h2>対戦モード - プレイヤー名入力</h2>
+        <div style="display:grid; gap:16px; max-width:400px; margin:auto;">
+          <div>
+            <label for="player-a-name" style="display:block; margin-bottom:4px; font-weight:600;">プレイヤー A の名前</label>
+            <input type="text" id="player-a-name" class="name-input" placeholder="プレイヤー A" maxlength="20" style="width:100%;" />
+          </div>
+          <div>
+            <label for="player-b-name" style="display:block; margin-bottom:4px; font-weight:600;">プレイヤー B の名前</label>
+            <input type="text" id="player-b-name" class="name-input" placeholder="プレイヤー B" maxlength="20" style="width:100%;" />
+          </div>
+        </div>
+        <div class="actions center" style="margin-top:20px;">
+          <button id="duel-start-confirm" class="primary glow-btn">🎮 対戦開始！</button>
+          <button id="duel-name-back" class="ghost">戻る</button>
+        </div>
+      </section>
+
+      <section id="controls-section" class="card hidden">
+        <h2>進行と操作</h2>
+        <div class="controls-row">
+          <div class="control">
+            <label for="speed">速度</label>
+            <select id="speed">
+              <option value="0.5">0.5x (ゆっくり)</option>
+              <option value="1" selected>1x (標準)</option>
+              <option value="1.5">1.5x (早め)</option>
+              <option value="2">2x (高速)</option>
+              <option value="3">3x</option>
+              <option value="4">4x</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>操作</label>
+            <div class="button-group">
+              <button id="pause-resume">一時停止</button>
+              <button id="skip-10">+10年</button>
+              <button id="reset" class="danger">リセット</button>
+            </div>
+          </div>
+        </div>
+        <div class="status-grid">
+          <div>
+            <div class="kpis">
+              <div class="kpi"><span>年齢</span><strong id="age">0</strong></div>
+              <div class="kpi"><span>職業</span><strong id="job">—</strong></div>
+              <div class="kpi"><span>寿命(予測)</span><strong id="lifespan">—</strong></div>
+            </div>
+            <div id="job-tag" class="chip accent hidden"></div>
+            <div id="bars" class="bars"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 対戦モード -->
+      <section id="duel-section" class="card hidden">
+        <h2>対戦モード</h2>
+        <div class="duel-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div id="duel-a" class="duel-panel card" style="padding:12px;">
+            <div style="font-weight:600; margin-bottom:6px;" class="player-name">プレイヤー A</div>
+            <div class="bars"></div>
+            <div class="muted">年齢:<span class="age">0</span> / 寿命:<span class="life">0</span></div>
+            <div>職業:<span class="job">—</span> / 総合点:<span class="score">0</span></div>
+          </div>
+          <div id="duel-b" class="duel-panel card" style="padding:12px;">
+            <div style="font-weight:600; margin-bottom:6px;" class="player-name">プレイヤー B</div>
+            <div class="bars"></div>
+            <div class="muted">年齢:<span class="age">0</span> / 寿命:<span class="life">0</span></div>
+            <div>職業:<span class="job">—</span> / 総合点:<span class="score">0</span></div>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:12px; display:flex; gap:8px;">
+          <button id="duel-stop" class="ghost">対戦停止</button>
+          <button id="duel-back" class="ghost">ホームへ戻る</button>
+        </div>
+        <div id="duel-result" class="summary" style="margin-top:12px;"></div>
+      </section>
+
+      <section id="scene-section" class="card scene hidden">
+        <div class="scene-icon" id="scene-icon">📜</div>
+        <div>
+          <div class="scene-title" id="scene-title">イベント</div>
+          <div class="scene-body" id="scene-body">—</div>
+        </div>
+      </section>
+
+      <div id="event-screen" class="event-screen hidden">
+        <div class="event-screen-content">
+          <div class="event-image" id="event-image"></div>
+          <div class="event-text">
+            <h3 id="event-screen-title">イベント</h3>
+            <p id="event-screen-body">説明</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="job-roulette" class="job-roulette hidden">
+        <div class="roulette-overlay">
+          <div class="roulette-modal">
+            <h3>💼 職業決定</h3>
+            <div class="roulette-machine">
+              <div class="reel-container">
+                <div class="reel" id="reel-1">
+                  <div class="reel-item">サラリーマン</div>
+                </div>
+                <div class="reel-light"></div>
+              </div>
+            </div>
+            <p id="roulette-result" class="roulette-result" style="margin: 20px 0; min-height: 30px; font-size: 18px; font-weight: 600;"></p>
+            <div class="button-group" style="display: flex; gap: 12px; justify-content: center;">
+              <button id="roulette-spin" class="primary glow-btn" style="flex: 1;">🎰 スピン!</button>
+              <button id="roulette-confirm" class="primary" style="flex: 1; display: none;">✓ 確定</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section id="log-section" class="card hidden">
+        <h2>出来事ログ</h2>
+        <div id="log" class="log"></div>
+      </section>
+
+      <section id="ending-section" class="card hidden">
+        <h2>結果</h2>
+        <div id="ending-summary" class="summary"></div>
+        <div class="actions">
+          <button id="copy-result" class="ghost">結果をコピー</button>
+          <button id="reincarnate" class="primary">もう一度転生</button>
+          <button id="back-home" class="ghost">ホームへ戻る</button>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="dex-dialog" class="dex">
+      <div class="dex-header">
+        <h3>図鑑</h3>
+        <button id="close-dex" class="ghost">閉じる</button>
+      </div>
+      <div class="dex-content">
+        <div class="dex-section">
+          <h4>職業コレクション</h4>
+          <ul id="dex-jobs" class="chips"></ul>
+        </div>
+        <div class="dex-section">
+          <h4>死因コレクション</h4>
+          <ul id="dex-deaths" class="chips"></ul>
+        </div>
+        <div class="dex-section">
+          <h4>実績</h4>
+          <ul id="dex-achievements" class="badges"></ul>
+        </div>
+      </div>
+    </dialog>
+
+    <footer class="app-footer">
+      <span>© Luck Life Game</span>
+      <span class="muted">1秒=1年の超高速オート人生</span>
+    </footer>
+
+    <script type="module" src="./src/main.js"></script>
+    <div id="toasts" class="toasts"></div>
+    <div id="fx-flash" class="fx-flash"></div>
+    <div id="fx-confetti" class="fx-confetti"></div>
+    <div id="cutins" class="cutins"></div>
+  </body>
+  </html>
